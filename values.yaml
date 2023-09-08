@@ -33,3 +33,71 @@ volumes:
       items:
         key: "config_rtmp.toml"
         path: "config_rtmp.toml"
+        
+configMap:
+  name: xiu-node-configmap
+  data:
+    rtmp:
+      port: 1935
+    hls:
+      port: 8080
+    httpflv:
+      port: 8081
+    log:
+      level: "info"
+      
+
+ingress:
+  name: xiu-prod-ingress
+  annotations:
+    subnets: xxxxxxxxxxxxxxxxxxxx
+    externalIpv4: auto
+    groupName: xiu-prod-ingress
+  tls:
+    - host: hls.vestan.ip03.ru
+      secretName: yc-certmgr-cert-id-xxxxxxxxxxxxxxxxxxxx
+    - host: httpflv.vestan.ip03.ru
+      secretName: yc-certmgr-cert-id-xxxxxxxxxxxxxxxxxxxx
+  rules:
+    - host: hls.vestan.ip03.ru
+      pathType: Prefix
+      path: "/"
+      service:
+        name: xiu-prod-service
+        port: hls
+    - host: httpflv.vestan.ip03.ru
+      pathType: Prefix
+      path: "/"
+      service:
+        name: xiu-prod-service
+        port: httpflv
+
+service:
+  name: xiu-prod-service
+  selector: xiu-prod-pod
+  ports:
+    - name: hls
+      port: 8080
+      targetPort: 8080
+    - name: httpflv
+      port: 8081
+      targetPort: 8081
+    - name: rtmp
+      port: 1935
+      targetPort: 1935
+      
+autoscaler:
+  name: xiu-prod-autoscaling
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: xiu-prod-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 1
