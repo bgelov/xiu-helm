@@ -1,0 +1,35 @@
+name: xiu-prod-deployment
+namespace: xiu-prod-namespace
+labels:
+  app: xiu
+  environment: prod
+replicas: 1
+strategy:
+  maxSurge: 1
+  maxUnavailable: 1
+  type: RollingUpdate
+containers:
+  name: xiu-prod-pod
+  image: bgelov/1687346100-977d03e7f0746077d90baa216bbf61c2
+  tag: 1.0.0
+  resources:
+    memory: "128Mi"
+    cpu: "500m"
+  ports: [1935, 8080, 8081]
+  readinessProbe:
+    port: 8080
+    initialDelaySeconds: 5
+  livenessProbe:
+    port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 30
+volumes:
+  config:
+    name: config
+    mountPath: "/etc/xiu"
+    readOnly: true
+    configMap:
+      name: xiu-node-configmap
+      items:
+        key: "config_rtmp.toml"
+        path: "config_rtmp.toml"

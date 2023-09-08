@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.labels.app }}
+    environment: {{ .Values.labels.environment }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.maxUnavailable }}
+    type: {{ .Values.strategy.type }}
+  selector:
+    matchLabels:
+      app: {{ .Values.labels.app }}
+      environment: {{ .Values.labels.environment }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.labels.app }}
+        environment: {{ .Values.labels.environment }}
+    spec:
+      containers:
+      - name: {{ .Values.containers.name }}
+        image: {{ .Values.containers.image }}:{{ .Values.containers.tag }}
+        resources:
+          limits:
+            memory: {{ .Values.containers.resources.memory }}
+            cpu: {{ .Values.containers.resources.cpu }}
+        ports:
+        - containerPort: {{ .Values.containers.ports[0] }}
+        - containerPort: {{ .Values.containers.ports[1] }}
+        - containerPort: {{ .Values.containers.ports[2] }}
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.containers.readinessProbe.port }}
+          initialDelaySeconds: {{ .Values.containers.readinessProbe.initialDelaySeconds }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.containers.livenessProbe.port }}
+          initialDelaySeconds: {{ .Values.containers.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.containers.livenessProbe.periodSeconds }}
+        volumeMounts:
+        - name: {{ .Values.volumes.config.name }}
+          mountPath: {{ .Values.volumes.config.mountPath }}
+          readOnly: {{ .Values.volumes.config.readOnly }}
+      volumes:
+        - name: {{ .Values.volumes.config.name }}
+          configMap:
+            name: {{ .Values.volumes.config.configMap.name }}
+            items:
+            - key: {{ .Values.volumes.config.configMap.items.key }}
+              path: {{ .Values.volumes.config.configMap.items.path }}
